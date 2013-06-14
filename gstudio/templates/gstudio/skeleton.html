@@ -39,18 +39,23 @@
 			body {
 				background-color: white;
 			}
+			
 			#chart {
-				height: 90%;
+				top:50%;
+				height: 50%;
 				margin: 0 auto;
 				width: 90%;
 				display: block;
 			}
-			svg {
-				margin-left: 0%;
+			
+			/*svg {
+				margin-left: 20%;
 				margin-right: 10%;
 				display: block;
 				position: absolute;
-			}
+			}*/
+			
+			
 .orgitdown .orgitdownButton1 a {
 	background-image:url(/static/gstudio/js/orgitdown/orgitdown/sets/org/images/save.jpeg);
 	margin-left:10px;
@@ -82,12 +87,12 @@
 }
 
 .orgitdown .orgitdownButton9 a {
-	background-image:url(/static/gstudio/js/orgitdown/orgitdown/sets/org/images/close.jpeg);
+	background-image:url(/static/gstudio/js/orgitdown/orgitdown/sets/org/images/video.jpeg);
 }
 
-<!--.orgitdown .preview a {
-	background-image:url(/static/gstudio/js/orgitdown/orgitdown/sets/default/images/preview.png);
-}-->
+.orgitdown .orgitdownButton10 a {
+	background-image:url(/static/gstudio/js/orgitdown/orgitdown/sets/org/images/close.jpeg);
+}
 
 .orgitdown * {
 	margin:0px; padding:0px;
@@ -260,6 +265,7 @@
 			// GLOBALS
 			var isImage=false;
 			var editImage=false;
+			var isEditdoc = false;
 			var objid;
 			var grappelli = {},
 			
@@ -388,15 +394,22 @@
 				<textarea id="gnoweditor" style="visibility:hidden;"></textarea>
 				
 				{% block graph %}
+
+								
 				<div id="graphcss">
+				{% block graphTag %}
+				{% endblock %}
+
 				<div id="chart">
-					
+						
 				</div>
 				<script type="text/javascript" src="/static/gstudio/js/jquery.min.js" ></script>
 				<script type="text/javascript" src="/static/gstudio/js/jquery-ui.js" ></script>
 				<script type="text/javascript" src="/static/gstudio/js/underscore.js" ></script>
 				<script type="text/javascript" src="/static/gstudio/js/d3.js"></script>
+				<script type="text/javascript" src="/static/gstudio/js/d3.v3.js"></script>
 				<script type="text/javascript" src="/static/gstudio/js/d3.layout.js"></script>
+				<script type="text/javascript" src="/static/gstudio/js/d3.layout.cloud.js"></script>
 				<script type="text/javascript" src="/static/gstudio/js/d3.geom.js"></script>
 				<!-- <script type="text/javascript" src="/static/gstudio/js/force.js"></script>
 
@@ -430,7 +443,7 @@ function init(a,b)
  
 }
 
-function fgraph() {
+$(function fgraph() {
 neighbour_node= new Array();
 clicked_node=new Array();
 prev_node=new Array();
@@ -447,18 +460,18 @@ $.getJSON('/nodetypes/graphs/graph_json/' + {{object.id}}, function (json1) {
 function load(key)
 {
   
-			if (s > 0 ){
+/*			if (s > 0 ){
 			var a = 50 * s;
 			var w = 1000;
 	   		var p = 140 + "%";
 			var h = 650;
    			var q = 3 * s + 75 + "%";
-			}else{
+			}else{*/
 			var w = 1000;
 	   		var p = 140 + "%";
 			var h = 650;
    			var q = 110 + "%";			
-			}
+			//}
         fill = d3.scale.category20();
  
   var vis = d3.select("#chart")
@@ -814,15 +827,15 @@ return relations;
 }
 
 
-}
-$(fgraph());
+});
 
 </script>
 
 				</div>
 				{% endblock %}
-		</div>
-				
+				</div>	
+		
+		
 				
 				<div id="footer" align="center">
 				<p>

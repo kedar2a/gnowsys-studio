@@ -21,6 +21,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from demo.settings import *
 from gstudio.models import *
+from tagging.models import Tag, TaggedItem
 from objectapp.models import *
 import os
 from gstudio.methods import *
@@ -31,68 +32,9 @@ from django.template.defaultfilters import slugify
 from django.template.loader import get_template
 from django.template import Context
 
-
 size = 128, 128
 report = "true"
 md5_checksum = ""
-
-
-def refpriorpost(request):
-    ret={}
-    listobject = []
-    gbobject = Gbobject.objects.all()
-    for each in gbobject:
-        if not ('page box of' in each.title or 'message box of' in each.title):
-            listobject.append(each.__str__())
-    ret['prior']= listobject
-    jsonobject = json.dumps(ret)
-    return HttpResponse(jsonobject, "application/json")
-
-
-def createwikinew(request):
-        ob=System()
-        titl=request.GET['title']
-        titleid=request.GET['titleid']
-        ob.title=titl
-        ob.status=2
-        p=Systemtype.objects.get(id=14)
-        ob.slug=slugify(titl)
-        ob.save()
-        ob.systemtypes.add(p)
-        us=request.user.id
-        ob.authors.add(request.user)
-        ob.member_set.add(Author.objects.get(id=us))
-        gbid1=Gbobject.objects.get(id=titleid)
-        sys1 = System()
-        sys1.title = "page box of " + titl
-        sys1.status = 2
-        sys1.content = "contains pages of " + titl
-        sys1.slug = "page_box_of_" + slugify(titl)
-        sys1.save()
-        ob.system_set.add(sys1)
-        ob.sites.add(Site.objects.get_current())
-        sys1.sites.add(Site.objects.get_current())
-        priorgbobject = gbid1.prior_nodes.all()
-        posteriorgbobject = gbid1.posterior_nodes.all()
-        t = get_template('gstudio/repriorpost.html')
-        html = t.render(Context({'priorgbobject':priorgbobject,'posteriorgbobject':posteriorgbobject,'objectid':titleid,'optionpriorpost':"p\
-riorpost"}))
-        return HttpResponse(html)
-
-
-def checkpageexist(request):
-        print "incheck"
-        dic={}
-        title=request.GET['title']
-        v=check_page_exists(title)
-        if v:
-                        dic['page']=1
-        else:
-                dic['page']=0
-        jsonobject = json.dumps(dic)
-        return HttpResponse(jsonobject, "application/json")
-
-
 def image(request):
 	p=Objecttype.objects.get(title="Image")
 	q=p.get_nbh['contains_members']
@@ -135,34 +77,25 @@ def image(request):
 		
 		if rating :
         	 	rate_it(int(imgid),request,int(rating))
-		# if delete != "":
-		# 	each=q.get(id=pict)
-		# 	each.delete()
-		# 	ti=each.title
-		# 	os.system("rm -f "+MEDIA_ROOTNEW+'/'+ti)
-		# 	p=Objecttype.objects.get(title="Image")
-		# 	q=p.get_nbh['contains_members']
-		# 	vars=RequestContext(request,{'images':q,'val':simg})
-		# 	template="gstudio/image.html"
-		# 	return render_to_response(template, vars)
+		if delete != "":
+			each=q.get(id=pict)
+			each.delete()
+			ti=each.title
+			os.system("rm -f "+MEDIA_ROOTNEW+'/'+ti)
+			p=Objecttype.objects.get(title="Image")
+			q=p.get_nbh['contains_members']
+			vars=RequestContext(request,{'images':q,'val':simg})
+			template="gstudio/image.html"
+			return render_to_response(template, vars)
 		if sub3 != "":
 			if simg != "":
-				if sub3 == "title":
-					vidon = Objecttype.objects.get(title="Image")
-					vido_new = vidon.get_nbh['contains_members']
-					vido = vido_new.filter(title__icontains=simg)
-					vido2 = vido.order_by(sub3)
-					variables = RequestContext(request,{'images':vido2,'val':simg})
-					template = "gstudio/image.html"
-					return render_to_response(template, variables)
-				else:
-					vidon = Objecttype.objects.get(title="Image")
-					vido_new = vidon.get_nbh['contains_members']
-					vido = vido_new.filter(creation_date__icontains=simg)
-					vido2 = vido.order_by(sub3)
-					variables = RequestContext(request,{'images':vido2,'val':simg})
-					template = "gstudio/image.html"
-					return render_to_response(template, variables)
+				vidon = Objecttype.objects.get(title="Image")
+				vido_new = vidon.get_nbh['contains_members']
+				vido = vido_new.filter(title__contains=simg)
+				vido2 = vido.order_by(sub3)
+				variables = RequestContext(request,{'images':vido2,'val':simg})
+				template = "gstudio/image.html"
+				return render_to_response(template, variables)
 			else:
 				vidon = Objecttype.objects.get(title="Image")
 				vido_new = vidon.get_nbh['contains_members']
@@ -178,41 +111,6 @@ def image(request):
 			i.save()
 
 		
-	# 	a=[]
-	# 	reportid=''
-	# 	for each in request.FILES.getlist("image[]",""):
-	# 		a.append(each)
-	# 	if a != "":
-	# 		i=0
-	# 		for f in a:
-	# 			if i==0:
-	# 				report,imageeachid = save_file(f,title,user)
-	# 				if report == "false":
-	# 					reportid = imageeachid
-	# 				else:
-	# 					create_object(f,user,title,content,str(request.user))
-	# 					i=i+1
-	# 			else:	
-	# 				report,imageeachid = save_file(f,title+'_'+str(i),user)
-	# 				if report == "false":
-	# 					reportid = imageeachid
-	# 				else:
-	# 					create_object(f,user,title+'_'+str(i),content,str(request.user))
-	# 					i=i+1
-	# 		p=Objecttype.objects.get(title="Image")
-	# 		q=p.get_nbh['contains_members']
-	# 		vars=RequestContext(request,{'images':q,'reportid':reportid,'report':report})
-	# 		template="gstudio/image.html"
-	# 		return render_to_response(template, vars)	
-	vars=RequestContext(request,{'images':q,'val':""})
-	template="gstudio/image.html"
-	return render_to_response(template, vars)
-def postImage(request):
- 		#image=request.FILES.getlist("image[]","")
- 		title=request.POST["title1"]
- 		user=request.POST["user"]
- 		content=request.POST["contenttext"]
-		report = "true"
 		a=[]
 		reportid=''
 		for each in request.FILES.getlist("image[]",""):
@@ -228,7 +126,6 @@ def postImage(request):
 						create_object(f,user,title,content,str(request.user))
 						i=i+1
 				else:	
-					print "else i==0"
 					report,imageeachid = save_file(f,title+'_'+str(i),user)
 					if report == "false":
 						reportid = imageeachid
@@ -238,8 +135,11 @@ def postImage(request):
 			p=Objecttype.objects.get(title="Image")
 			q=p.get_nbh['contains_members']
 			vars=RequestContext(request,{'images':q,'reportid':reportid,'report':report})
-			template="gstudio/image_refresh.html"
-			return render_to_response(template, vars)
+			template="gstudio/image.html"
+			return render_to_response(template, vars)	
+	vars=RequestContext(request,{'images':q,'val':""})
+	template="gstudio/image.html"
+	return render_to_response(template, vars)
 
 def save_file(file,title, user, path=""):
         report = "true"
@@ -481,9 +381,9 @@ def edit_title(request):
 		nid.save()
 		nid=NID.objects.get(id=titleid)
 		nidtitle = nid.title
-  	#t = get_template('gstudio/editedobjecttitle.html')
-	#html = t.render(Context({'title':nidtitle}))
-	return HttpResponse(nidtitle)
+  	t = get_template('gstudio/editedobjecttitle.html')
+	html = t.render(Context({'title':nidtitle}))
+	return HttpResponse(html)
 
 
 def addpriorpost(request):
@@ -502,13 +402,9 @@ def addpriorpost(request):
 		gbid1=Gbobject.objects.get(id=titleid)
 	priorgbobject = gbid1.prior_nodes.all()
 	posteriorgbobject = gbid1.posterior_nodes.all()
-	variables = RequestContext(request, {'priorgbobject':priorgbobject,'posteriorgbobject':posteriorgbobject,'objectid':titleid,'optionpriorpost':"priorpost"})
-        template = "gstudio/repriorpost.html"
-        return render_to_response(template, variables)
-  	#t = get_template('gstudio/repriorpost.html')
-	#html = t.render(Context({'priorgbobject':priorgbobject,'posteriorgbobject':posteriorgbobject,'objectid':titleid,'optionpriorpost':"priorpost"}))
-	#return HttpResponse(html)
-	#return HttpResponseRedirect("/gstudio/resources/images/")
+  	t = get_template('gstudio/repriorpost.html')
+	html = t.render(Context({'priorgbobject':priorgbobject,'posteriorgbobject':posteriorgbobject,'objectid':titleid,'optionpriorpost':"priorpost"}))
+	return HttpResponse(html)
 	#return HttpResponseRedirect("/gstudio/resources/images/")
 
 def addtag(request):
@@ -520,7 +416,7 @@ def addtag(request):
 		i.tags = i.tags+ ","+(data)
 		i.save()
 		i=Gbobject.objects.get(id=objectid)
-		print i,"in addtag"
+		
   	t = get_template('gstudio/repriorpost.html')
 	html = t.render(RequestContext(request,{'viewtag':i,'optiontag':"tag","objectid":objectid}))
 	return HttpResponse(html)
@@ -541,25 +437,117 @@ def deletetag(request):
 	html = t.render(RequestContext(request,{'viewtag':i,'optiontag':"tag","objectid":objectid}))
 	return HttpResponse(html)
 
-def tagclouds(request):
-	vars=RequestContext(request,{})
-	template="gstudio/tagclouds.html"
-	return render_to_response(template,vars)
+def get_pgtitle(request):
+	
+	counter=0
+	json=""
+	if request.method =="GET":
+		t_id=request.GET['data']
+		
+		tag = Tag.objects.get(id = t_id)
+		queryset = TaggedItem.objects.get_by_model(Gbobject.published.all(), tag)
+		
+		if queryset:
+			json="["
+			for obj in queryset:
+				print 'Object : ',obj
+				if counter>0:
+					json+=","
+				
+				json +='{"page_title":"' + str(obj.title) + '","page_id":'+ str(obj.id) + '}'
+				counter +=1		
+			json+="]"
+			
+	json+=""
+  	return HttpResponse(json)
+	
+def get_url(request):
+	if request.method =="GET":
+		page_id=request.GET['data']
+	obj = Gbobject.objects.get(id=page_id)
+	#url = '{"url": http://beta.metastudio.org' + obj.get_view_object_url + '}'
+	url = 'http://beta.metastudio.org' + obj.get_view_object_url
+	return HttpResponse(url)
 
-def imageDelete(request):
-	if request.method == "GET":
-        	image_ajax_id=request.GET['image_ajax_id']
-		print image_ajax_id , "image"
-		gb = Gbobject.objects.filter(id=image_ajax_id)
-		if gb:
-			each=Gbobject.objects.get(id=image_ajax_id)
-			each.delete()
-			ti=each.title
-			os.system("rm -f "+MEDIA_ROOTNEW+'/'+ti)
-		p=Objecttype.objects.get(title="Image")
-		q=p.get_nbh['contains_members']
-		vars=RequestContext(request,{'images':q,})
-		template="gstudio/image_refresh.html"
-		return render_to_response(template, vars)
+def tagclouds_data(request):
+	#node = NID.objects.filter(nodemodel="Gbobject")
+	tag = Tag.objects.all()
+        str_data = "[\n"
+        
+	if tag:
+		#f = open(FILE_URL1,'w')
+		
+		flag = 0
+		
+		for t in tag:
+			
+			if flag:
+				str_data += ',\n'
+			flag = 1
+			
+			tag_name = t.name
+			str_data += '\t{\n\t\t"tag_name": "'+ str(tag_name) + '",\n'
+			str_data += '\t\t"tag_id":' + str(t.id) +',\n'
+			str_data += '\t\t"pages" : [\n\t\t\t\t\t'
+
+			queryset = TaggedItem.objects.get_by_model(Gbobject.published.all(), t)
+			
+			counter = 0
+			for obj1 in queryset:
+			    
+			    if counter > 0:
+				str_data +=",\n\t\t\t\t\t"
+			    str_data += '{"page_title" : "'+ str(obj1.title) + '"'
+			    			    
+			    #retreving associated tags with current object obj1
+			    
+			    #tag_arr = Tag.objects.get_for_object(obj1) 
+			    #str_data += ',"associated_tags" : ['
+			    #t_counter = 0
+			    #for t in tag_arr:
+			    #    if t_counter > 0:
+			    #	     str_data += ","
+
+			    #	t_counter += 1
+			    #	str_data += '{"tag" : "'+ str(t.name) +'"}'
+			    #str_data  += ']'
+			    str_data += '}'
+			    counter += 1
+
+			c = str(counter)				
+			str_data += '\n\t\t\t\t  ],\n\t\t"weight" : "' + c + '"\n'
+			str_data += '\t}'
+			
+			
+		str_data += "\n]"	
+		#f.write(str_data)	
+	
+		#f.close()
+	
+	#JSON file for fetching URL and TITLE
+	
+	#	f = open(FILE_URL2,'w')	
+	#	obj = Gbobject.objects.all()
+	#	str_data2 = '['
+	#	for ob in obj:
+	#		url = "beta.metastudio.org" + ob.get_view_object_url #+ "/"
+	#		title = ob.title
+#
+#			str_data2 += '\t\t{"page_title" : "' + ob.title + '","url" : "' + str(url) + '"}\n'
+#		
+#		str_data2 += ']'
+#		f.write(str_data2)	
+#		f.close()
+	
+	else: 
+		return HttpResponse('No tag available, Can\'t create file')
+	return HttpResponse(str_data)
+
+def tagclouds(request):
+		
+	t = get_template('gstudio/WordTagcloud.html')
+	html = t.render(RequestContext(request,{}))
+	return HttpResponse(html)
+	
 
 
